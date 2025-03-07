@@ -44,6 +44,23 @@
             background-color: #444;
             color: white;
         }
+        .update-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #ccc;
+        }
+        .refresh-button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .refresh-button:hover {
+            background-color: #666;
+        }
         #channel-list {
             list-style: none;
             padding: 0;
@@ -79,6 +96,10 @@
             <div class="sticky-header">
                 <h2>Channels</h2>
                 <input type="text" id="search" placeholder="Search by name or group...">
+                <div class="update-info">
+                    Last updated: <span id="last-updated">Loading...</span>
+                </div>
+                <button class="refresh-button" id="refresh-button">Refresh Playlist</button>
             </div>
             <ul id="channel-list"></ul>
         </div>
@@ -90,6 +111,7 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script>
         let allChannels = [];
+        let lastUpdated = null;
 
         // Parse M3U file to extract channel name, group, and stream URL
         function parseM3U(data) {
@@ -113,14 +135,21 @@
             return channels;
         }
 
-        // Fetch M3U file and display channels
-        fetch('https://iptv-org.github.io/iptv/countries/ca.m3u')
-            .then(response => response.text())
-            .then(data => {
-                allChannels = parseM3U(data);
-                displayChannels(allChannels);
-            })
-            .catch(error => console.error('Error fetching M3U:', error));
+        // Fetch M3U file and update channels
+        function fetchPlaylist() {
+            fetch('https://iptv-org.github.io/iptv/countries/ca.m3u')
+                .then(response => response.text())
+                .then(data => {
+                    allChannels = parseM3U(data);
+                    lastUpdated = new Date();
+                    document.getElementById('last-updated').textContent = lastUpdated.toLocaleString();
+                    displayChannels(allChannels);
+                })
+                .catch(error => {
+                    console.error('Error fetching M3U:', error);
+                    document.getElementById('last-updated').textContent = 'Error fetching playlist';
+                });
+        }
 
         // Display channels in the list
         function displayChannels(channels) {
@@ -157,6 +186,12 @@
             );
             displayChannels(filteredChannels);
         });
+
+        // Refresh button event listener
+        document.getElementById('refresh-button').addEventListener('click', fetchPlaylist);
+
+        // Initial fetch of the playlist
+        fetchPlaylist();
     </script>
 </body>
 </html>
