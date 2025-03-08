@@ -72,9 +72,22 @@
             background-color: #444;
             margin-bottom: 5px;
             border-radius: 5px;
+            display: flex;
+            align-items: center;
         }
         #channel-list li:hover {
             background-color: #555;
+        }
+        #channel-list li.inactive {
+            color: #888; /* Darker text for non-working channels */
+        }
+        .favorite-btn {
+            margin-left: auto;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        .favorite-btn.favorited {
+            color: yellow;
         }
         .video-container {
             flex: 1;
@@ -91,11 +104,16 @@
         .hidden {
             display: none;
         }
+        #loading {
+            text-align: center;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="main-container">
         <div class="channel-list-container">
+            <div id="loading">Loading channels...</div>
             <div class="sticky-header">
                 <h2 id="playlist-title">ALL Channels</h2>
                 <select id="region-filter">
@@ -111,6 +129,7 @@
                     <option value="News">News</option>
                     <option value="Movies">Movies</option>
                     <option value="English">English</option>
+                    <option value="Favorites">Favorites</option>
                 </select>
                 <input type="text" id="search" placeholder="Search by name, group, region, or category...">
                 <div class="update-info">
@@ -124,7 +143,7 @@
                     <div id="playlist-error" style="color: red; margin-top: 5px;"></div>
                 </div>
             </div>
-            <ul id="channel-list"></ul>
+            <ul id="channel-list" class="hidden"></ul>
         </div>
         <div class="video-container">
             <div id="default-message">Please try a stream to get started.</div>
@@ -136,8 +155,22 @@
     <script>
         let allChannels = [];
         let lastUpdated = null;
+        let favorites = JSON.parse(getCookie('favorites') || '[]');
 
-        // Parse M3U file to extract channel details
+        // Cookie functions
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function setCookie(name, value, days) {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+        }
+
+        // Parse M3U file
         function parseM3U(data, region) {
             const lines = data.split('\n');
             const channels = [];
@@ -151,6 +184,8 @@
                     currentChannel.name = nameMatch ? nameMatch[1] : 'Unnamed Channel';
                     currentChannel.group = groupMatch ? groupMatch[1] : 'Unknown';
                     currentChannel.region = region;
+                    currentChannel.id = `${region}_${channels.length}`; // Unique ID
+                    currentChannel.working = true; // Track stream status
                     if (currentChannel.group.includes('Sports')) {
                         currentChannel.category = 'Sports';
                     } else if (currentChannel.group.includes('News')) {
@@ -169,8 +204,13 @@
             return channels;
         }
 
-        // Fetch playlists and update channels
-        function fetchPlaylists() {
+        // Fetch playlists
+        async function fetchPlaylists() {
+            const loading = document.getElementById('loading');
+            const channelList = document.getElementById('channel-list');
+            loading.classList.remove('hidden');
+            channelList.classList.add('hidden');
+
             const playlists = [
                 { url: 'https://iptv-org.github.io/iptv/countries/ca.m3u', region: 'CA' },
                 { url: 'https://iptv-org.github.io/iptv/countries/us.m3u', region: 'US' },
@@ -178,39 +218,72 @@
                 { url: 'https://iptv-org.github.io/iptv/categories/sports.m3u', region: 'Sports' }
             ];
 
-            Promise.all(playlists.map(playlist =>
-                fetch(playlist.url)
-                    .then(response => response.text())
-                    .then(data => parseM3U(data, playlist.region))
-            ))
-                .then(results => {
-                    allChannels = results.flat();
-                    lastUpdated = new Date();
-                    document.getElementById('last-updated').textContent = lastUpdated.toLocaleString();
-                    filterChannels();
-                })
-                .catch(error => {
-                    console.error('Error fetching playlists:', error);
-                    document.getElementById('last-updated').textContent = 'Error';
-                });
+            try {
+                const results = await Promise.all(playlists.map(playlist =>
+                    fetch(playlist.url)
+                        .then(response => response.text())
+                        .then(data => parseM3U(data, playlist.region))
+                ));
+                allChannels = results.flat();
+                lastUpdated = new Date();
+                document.getElementById('last-updated').textContent = lastUpdated.toLocaleString();
+                filterChannels();
+                loading.classList.add('hidden');
+                channelList.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error fetching playlists:', error);
+                document.getElementById('last-updated').textContent = 'Error loading playlists';
+                channelList.innerHTML = '<li>Error loading playlists. Try refreshing.</li>';
+                loading.classList.add('hidden');
+                channelList.classList.remove('hidden');
+            }
         }
 
-        // Display channels in the list
+        // Display channels
         function displayChannels(channels) {
             const channelList = document.getElementById('channel-list');
             channelList.innerHTML = '';
-            channels.forEach(channel => {
+            // Sort: favorited channels first
+            const favoritedChannels = channels.filter(channel => favorites.includes(channel.id));
+            const otherChannels = channels.filter(channel => !favorites.includes(channel.id));
+            const sortedChannels = [...favoritedChannels, ...otherChannels];
+
+            sortedChannels.forEach(channel => {
                 const li = document.createElement('li');
                 li.textContent = `${channel.name} (${channel.group}, ${channel.region})`;
-                li.dataset.streamUrl = channel.streamUrl; // Store URL for removal
-                li.addEventListener('click', () => playStream(channel.streamUrl, li));
+                if (!channel.working) li.classList.add('inactive'); // Darken non-working channels
+                const favBtn = document.createElement('span');
+                favBtn.textContent = '☆';
+                favBtn.className = 'favorite-btn';
+                favBtn.dataset.id = channel.id;
+                if (favorites.includes(channel.id)) favBtn.classList.add('favorited');
+                favBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFavorite(channel.id, favBtn);
+                });
+                li.appendChild(favBtn);
+                li.addEventListener('click', () => playStream(channel.streamUrl, channel.id));
                 channelList.appendChild(li);
             });
-            document.getElementById('channel-count').textContent = channels.length;
+            document.getElementById('channel-count').textContent = sortedChannels.length;
         }
 
-        // Play the selected stream
-        function playStream(streamUrl, listItem) {
+        // Toggle favorite status
+        function toggleFavorite(channelId, btn) {
+            const index = favorites.indexOf(channelId);
+            if (index === -1) {
+                favorites.push(channelId);
+                btn.classList.add('favorited');
+            } else {
+                favorites.splice(index, 1);
+                btn.classList.remove('favorited');
+            }
+            setCookie('favorites', JSON.stringify(favorites), 365);
+            filterChannels();
+        }
+
+        // Play stream
+        function playStream(streamUrl, channelId) {
             const video = document.getElementById('video-player');
             const defaultMessage = document.getElementById('default-message');
             defaultMessage.classList.add('hidden');
@@ -229,17 +302,20 @@
                     }
                 })
                 .catch(() => {
-                    allChannels = allChannels.filter(channel => channel.streamUrl !== streamUrl);
-                    filterChannels(); // Refresh list without broken stream
+                    const channel = allChannels.find(ch => ch.id === channelId);
+                    if (channel) channel.working = false; // Mark as non-working
+                    filterChannels(); // Refresh without removing
                 });
         }
 
-        // Filter channels based on search, region, and category
+        // Filter channels
         function filterChannels() {
             const searchTerm = document.getElementById('search').value.toLowerCase();
             const regionFilter = document.getElementById('region-filter').value;
             const categoryFilter = document.getElementById('category-filter').value;
-            const title = regionFilter ? `${regionFilter} Channels` : (categoryFilter ? `${categoryFilter} Channels` : 'ALL Channels');
+            const title = regionFilter ? `${regionFilter} Channels` :
+                         (categoryFilter === 'Favorites' ? 'Favorite Channels' :
+                         (categoryFilter ? `${categoryFilter} Channels` : 'ALL Channels'));
             document.getElementById('playlist-title').textContent = title;
 
             const filteredChannels = allChannels.filter(channel =>
@@ -248,7 +324,8 @@
                  channel.region.toLowerCase().includes(searchTerm) ||
                  channel.category.toLowerCase().includes(searchTerm)) &&
                 (!regionFilter || channel.region === regionFilter) &&
-                (!categoryFilter || channel.category === categoryFilter)
+                (!categoryFilter ||
+                 (categoryFilter === 'Favorites' ? favorites.includes(channel.id) : channel.category === categoryFilter))
             );
             displayChannels(filteredChannels);
         }
