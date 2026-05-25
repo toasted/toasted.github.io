@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PT Pro Timer - Routine Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <style>
+        :root { 
+            --hold: #2ecc71; --rest: #e67e22; --setrest: #3498db; 
+            --prep: #f1c40f; --bg: #f0f2f5; --transition: #9b59b6;
+        }
+
+        * { box-sizing: border-box; }
+        
+        body, html { 
+            margin: 0; padding: 0; width: 100%; min-height: 100%;
+            font-family: -apple-system, system-ui, sans-serif;
+            background-color: var(--bg);
+            color: #333;
+        }
+
+        /* SETTINGS SCREEN */
+        #screen-settings {
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; padding: 20px; padding-bottom: 100px; /* Space for fixed start button */
+        }
+
+        .settings-card {
+            background: white; padding: 20px; border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 12px; max-width: 500px; width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .settings-card div { display: flex; flex-direction: column; }
+        .full-width { grid-column: span 2; }
+        label { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 4px; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+
+        /* PRESETS & ROUTINE SECTIONS */
+        .section-header { width: 100%; max-width: 500px; margin: 10px 0; font-weight: bold; color: #666; display: flex; justify-content: space-between; }
+        
+        .list-container { width: 100%; max-width: 500px; margin-bottom: 20px; }
+        
+        .item-card {
+            background: white; margin-bottom: 8px; padding: 12px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .item-info { flex-grow: 1; cursor: pointer; }
+        .item-name { font-weight: bold; display: block; }
+        .item-meta { font-size: 0.75rem; color: #888; }
+        
+        .btn-action { border: none; background: none; padding: 5px 10px; font-size: 1.2rem; cursor: pointer; border-radius: 5px; }
+        .btn-add { color: var(--hold); }
+        .btn-del { color: #ff4757; font-size: 0.9rem; }
+
+        /* WORKOUT SCREEN */
+        #screen-workout {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            flex-direction: column; color: white; text-align: center; z-index: 100;
+        }
+
+        #workout-header { padding-top: 2vh; }
+        #ex-name-display { font-size: 1.2rem; font-weight: bold; background: rgba(0,0,0,0.2); display: inline-block; padding: 5px 15px; border-radius: 20px; }
+        #status-text { font-size: 1.5rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; margin-top: 10px; }
+        #timer-display { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 35vh; font-weight: 900; }
+
+        .stats-footer { display: grid; grid-template-columns: repeat(3, 1fr); background: rgba(0,0,0,0.2); padding: 10px 0; }
+        .stat-box { display: flex; flex-direction: column; }
+        .stat-label { font-size: 0.7rem; opacity: 0.8; font-weight: bold; }
+        .stat-count { font-size: 2.2rem; font-weight: 900; }
+
+        /* BUTTONS */
+        .fixed-bottom { position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(transparent, var(--bg) 20%); display: flex; justify-content: center; }
+        .btn-container { width: 100%; max-width: 500px; display: flex; gap: 10px; }
+        button { border: none; border-radius: 50px; font-size: 1.1rem; font-weight: bold; cursor: pointer; padding: 15px; }
+        #btn-start { background: var(--hold); color: white; flex: 2; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
+        #btn-save { background: white; color: #333; flex: 1; border: 1px solid #ddd; font-size: 0.8rem; }
+        
+        #btn-pause { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; width: 100%; margin-bottom: 10px; }
+        #btn-quit { background: #ff4757; color: white; font-size: 0.8rem; padding: 8px; opacity: 0.8; width: 100%; }
+
+        /* Mode Colors */
+        .mode-prep { background-color: var(--prep) !important; color: #222 !important; }
+        .mode-hold { background-color: var(--hold) !important; }
+        .mode-rest { background-color: var(--rest) !important; }
+        .mode-setrest { background-color: var(--setrest) !important; }
+        .mode-transition { background-color: var(--transition) !important; }
+    </style>
+</head>
+<body>
+
+    <div id="screen-settings">
+        <h1>PT Timer</h1>
+        
+        <div class="settings-card">
+            <div class="full-width"><label>Exercise Name</label><input type="text" id="inName" placeholder="Single Exercise"></div>
+            <div><label>Hold (Sec)</label><input type="number" id="inHold" value="10"></div>
+            <div><label>Rest (Sec)</label><input type="number" id="inRest" value="3"></div>
+            <div><label>Reps/Set</label><input type="number" id="inReps" value="10"></div>
+            <div><label>Sets</label><input type="number" id="inSets" value="3"></div>
+            <div class="full-width"><label>Rest Between Sets</label><input type="number" id="inSetRest" value="30"></div>
+        </div>
+
+        <div class="section-header"><span>MY PRESETS</span></div>
+        <div id="presets-list" class="list-container"></div>
+
+        <div class="section-header"><span>TODAY'S ROUTINE</span> <span id="routine-count" style="font-size:0.8rem">0 Exercises</span></div>
+        <div id="routine-list" class="list-container"></div>
+        
+        <div style="width: 100%; max-width: 500px; text-align: right;">
+            <label>Transition between exercises:</label>
+            <input type="number" id="inTrans" value="10" style="width: 50px; padding: 5px; font-size: 0.8rem;">
+        </div>
+
+        <div class="fixed-bottom">
+            <div class="btn-container">
+                <button id="btn-save" onclick="savePreset()">SAVE PRESET</button>
+                <button id="btn-start" onclick="startWorkout()">START</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-workout">
+        <div id="workout-header">
+            <div id="ex-name-display">EXERCISE</div>
+            <div id="status-text">GET READY</div>
+        </div>
+        <div id="timer-display">0</div>
+        <div class="stats-footer">
+            <div class="stat-box"><span class="stat-label">EXERCISE</span><span class="stat-count" id="outEx">1/1</span></div>
+            <div class="stat-box"><span class="stat-label">SET</span><span class="stat-count" id="outSet">1</span></div>
+            <div class="stat-box"><span class="stat-label">REP</span><span class="stat-count" id="outRep">1</span></div>
+        </div>
+        <div style="padding: 20px; width: 100%; max-width: 400px; align-self: center;">
+            <button id="btn-pause" onclick="togglePause()">PAUSE</button>
+            <button id="btn-quit" onclick="resetAll()">QUIT</button>
+        </div>
+    </div>
+
+    <script>
+        let timer = null, isPaused = false, wakeLock = null;
+        let mode = 'PREP', timeLeft, currentRep, currentSet, currentExIdx;
+        let presets = [], routine = [];
+
+        window.onload = () => {
+            presets = JSON.parse(localStorage.getItem('pt-presets') || '[]');
+            renderPresets();
+        };
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(msg);
+        }
+
+        // PRESET LOGIC
+        function savePreset() {
+            const name = document.getElementById('inName').value || "Exercise " + (presets.length + 1);
+            const ex = {
+                name,
+                hold: parseInt(document.getElementById('inHold').value),
+                rest: parseInt(document.getElementById('inRest').value),
+                reps: parseInt(document.getElementById('inReps').value),
+                sets: parseInt(document.getElementById('inSets').value),
+                setRest: parseInt(document.getElementById('inSetRest').value)
+            };
+            presets.push(ex);
+            localStorage.setItem('pt-presets', JSON.stringify(presets));
+            renderPresets();
+        }
+
+        function deletePreset(index) {
+            presets.splice(index, 1);
+            localStorage.setItem('pt-presets', JSON.stringify(presets));
+            renderPresets();
+        }
+
+        function loadToInputs(index) {
+            const ex = presets[index];
+            document.getElementById('inName').value = ex.name;
+            document.getElementById('inHold').value = ex.hold;
+            document.getElementById('inRest').value = ex.rest;
+            document.getElementById('inReps').value = ex.reps;
+            document.getElementById('inSets').value = ex.sets;
+            document.getElementById('inSetRest').value = ex.setRest;
+        }
+
+        function addToRoutine(index) {
+            routine.push({...presets[index]});
+            renderRoutine();
+        }
+
+        function removeFromRoutine(index) {
+            routine.splice(index, 1);
+            renderRoutine();
+        }
+
+        function renderPresets() {
+            const container = document.getElementById('presets-list');
+            container.innerHTML = presets.length ? '' : '<p style="color:#aaa; font-size:0.8rem">No saved presets.</p>';
+            presets.forEach((ex, i) => {
+                container.innerHTML += `
+                    <div class="item-card">
+                        <div class="item-info" onclick="loadToInputs(${i})">
+                            <span class="item-name">${ex.name}</span>
+                            <span class="item-meta">${ex.sets}x${ex.reps} | H:${ex.hold} R:${ex.rest}</span>
+                        </div>
+                        <button class="btn-action btn-add" onclick="addToRoutine(${i})">+</button>
+                        <button class="btn-action btn-del" onclick="deletePreset(${i})">✕</button>
+                    </div>`;
+            });
+        }
+
+        function renderRoutine() {
+            const container = document.getElementById('routine-list');
+            document.getElementById('routine-count').innerText = routine.length + " Exercises";
+            container.innerHTML = routine.length ? '' : '<p style="color:#aaa; font-size:0.8rem">Tap + on a preset to build a routine.</p>';
+            routine.forEach((ex, i) => {
+                container.innerHTML += `
+                    <div class="item-card" style="border-left: 4px solid var(--transition)">
+                        <div class="item-info">
+                            <span class="item-name">${ex.name}</span>
+                        </div>
+                        <button class="btn-action btn-del" onclick="removeFromRoutine(${i})">✕</button>
+                    </div>`;
+            });
+        }
+
+        // TIMER LOGIC
+        async function startWorkout() {
+            // If routine is empty, just use the current inputs as a single-exercise routine
+            if (routine.length === 0) {
+                routine = [{
+                    name: document.getElementById('inName').value || "Quick Start",
+                    hold: parseInt(document.getElementById('inHold').value),
+                    rest: parseInt(document.getElementById('inRest').value),
+                    reps: parseInt(document.getElementById('inReps').value),
+                    sets: parseInt(document.getElementById('inSets').value),
+                    setRest: parseInt(document.getElementById('inSetRest').value)
+                }];
+            }
+
+            currentExIdx = 0;
+            initExercise();
+
+            document.getElementById('screen-settings').style.display = 'none';
+            document.getElementById('screen-workout').style.display = 'flex';
+            
+            if ('wakeLock' in navigator) { try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e){} }
+            
+            updateUI();
+            speak("Starting workout. " + routine[currentExIdx].name);
+            timer = setInterval(tick, 1000);
+        }
+
+        function initExercise() {
+            const ex = routine[currentExIdx];
+            currentRep = 1; currentSet = 1;
+            mode = 'PREP'; 
+            timeLeft = 5;
+        }
+
+        function tick() {
+            if (isPaused) return;
+            timeLeft--;
+            if (timeLeft < 0) transition();
+            updateUI();
+        }
+
+        function transition() {
+            const ex = routine[currentExIdx];
+            const transTime = parseInt(document.getElementById('inTrans').value);
+
+            if (mode === 'PREP' || mode === 'REST' || mode === 'SETREST' || mode === 'TRANSITION') {
+                mode = 'HOLD'; timeLeft = ex.hold; speak("Hold");
+            } else {
+                if (currentRep < ex.reps) {
+                    currentRep++; mode = 'REST'; timeLeft = ex.rest; speak("Rest");
+                } else if (currentSet < ex.sets) {
+                    currentSet++; currentRep = 1; mode = 'SETREST'; timeLeft = ex.setRest; speak("Set rest");
+                } else {
+                    // Current Exercise Finished
+                    if (currentExIdx < routine.length - 1) {
+                        currentExIdx++;
+                        mode = 'TRANSITION';
+                        timeLeft = transTime;
+                        speak("Next: " + routine[currentExIdx].name);
+                    } else {
+                        finish();
+                    }
+                }
+            }
+        }
+
+        function finish() {
+            clearInterval(timer);
+            speak("Workout complete. Great job!");
+            alert("Workout complete!");
+            resetAll();
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('btn-pause').innerText = isPaused ? "RESUME" : "PAUSE";
+            document.getElementById('btn-pause').style.background = isPaused ? "var(--hold)" : "rgba(255,255,255,0.2)";
+        }
+
+        function resetAll() {
+            clearInterval(timer); timer = null; isPaused = false;
+            if (wakeLock) { wakeLock.release(); wakeLock = null; }
+            document.getElementById('screen-settings').style.display = 'flex';
+            document.getElementById('screen-workout').style.display = 'none';
+            // Clear routine if it was a "Quick Start"
+            if (document.getElementById('routine-count').innerText === "0 Exercises") routine = [];
+        }
+
+        function updateUI() {
+            const ex = routine[currentExIdx];
+            document.getElementById('screen-workout').className = "mode-" + mode.toLowerCase();
+            document.getElementById('status-text').innerText = (mode === 'SETREST' ? 'SET REST' : mode);
+            document.getElementById('ex-name-display').innerText = mode === 'TRANSITION' ? "UP NEXT" : ex.name;
+            document.getElementById('timer-display').innerText = timeLeft;
+            document.getElementById('outEx').innerText = (currentExIdx + 1) + "/" + routine.length;
+            document.getElementById('outSet').innerText = currentSet;
+            document.getElementById('outRep').innerText = currentRep;
+        }
+    </script>
+</body>
+</html>
