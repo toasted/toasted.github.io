@@ -1,142 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>PT Pro Timer</title>
+    <title>PT Routine Timer</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <style>
         :root { 
             --hold: #2ecc71; --rest: #e67e22; --setrest: #3498db; 
             --prep: #f1c40f; --transition: #9b59b6;
-            --bg: #f0f2f5; 
-            --card: #ffffff;
-            --text: #333333;
-            --subtext: #888888;
-            --border: #dddddd;
+            --bg: #f0f2f5; --card: #ffffff; --text: #333333;
+            --subtext: #888888; --border: #dddddd;
         }
-
         body.dark-mode {
-            --bg: #121212;
-            --card: #1e1e1e;
-            --text: #e0e0e0;
-            --subtext: #aaaaaa;
-            --border: #333333;
+            --bg: #121212; --card: #1e1e1e; --text: #e0e0e0;
+            --subtext: #aaaaaa; --border: #333333;
         }
-
         * { box-sizing: border-box; }
-        
-        /* 1. PC Background Fix: Applied to html to prevent white chunks */
         html { height: 100%; background-color: var(--bg); transition: background-color 0.3s; }
-
         body { 
             margin: 0; padding: 0; width: 100%; min-height: 100%;
             font-family: -apple-system, system-ui, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            transition: background-color 0.3s;
-            overflow-x: hidden;
+            background-color: var(--bg); color: var(--text);
+            transition: background-color 0.3s; overflow-x: hidden;
         }
-
         #screen-settings {
             display: flex; flex-direction: column; align-items: center;
-            width: 100%; padding: 15px; 
-            padding-bottom: 140px; /* Extra space so fixed buttons don't cover content */
+            width: 100%; padding: 15px 15px 140px; 
             max-width: 600px; margin: 0 auto;
         }
-
-        .header-row {
-            display: flex; justify-content: space-between; align-items: center;
-            width: 100%; margin-bottom: 15px;
-        }
-
-        #btn-theme {
-            background: none; border: 1px solid var(--subtext); color: var(--text);
-            padding: 5px 12px; border-radius: 15px; cursor: pointer; font-size: 0.8rem;
-        }
-
-        /* 2. Responsive Grid Fix */
+        .header-row { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px; }
+        #btn-theme { background: none; border: 1px solid var(--subtext); color: var(--text); padding: 5px 12px; border-radius: 15px; cursor: pointer; font-size: 0.8rem; }
         .settings-card {
             background: var(--card); padding: 20px; border-radius: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); /* Default 2 col */
-            gap: 12px; width: 100%;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%;
         }
-
-        /* Stack on very small phones */
-        @media (max-width: 360px) {
-            .settings-card { grid-template-columns: 1fr; }
-            .full-width { grid-column: span 1; }
-        }
-
-        /* 3-column on wide screens/landscape */
+        @media (max-width: 360px) { .settings-card { grid-template-columns: 1fr; } .full-width { grid-column: span 1; } }
         @media (min-width: 768px) or (orientation: landscape) and (max-height: 500px) {
             .settings-card { grid-template-columns: repeat(3, 1fr); }
             .full-width { grid-column: span 1 !important; }
-            h1 { font-size: 1.2rem; }
         }
-
         .settings-card div { display: flex; flex-direction: column; }
         .full-width { grid-column: span 2; }
-        
         label { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; color: var(--subtext); margin-bottom: 4px; }
-        
-        input { 
-            padding: 12px; border: 1px solid var(--border); border-radius: 8px; 
-            font-size: 16px; /* Prevents auto-zoom on iOS */
-            background: var(--card); color: var(--text); 
-            width: 100%; -webkit-appearance: none;
-        }
-
-        /* Routine Styling */
+        input { padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; background: var(--card); color: var(--text); width: 100%; }
         .section-header { width: 100%; margin: 20px 0 10px; font-weight: bold; color: var(--subtext); display: flex; justify-content: space-between; font-size: 0.8rem; }
-        .list-container { width: 100%; }
-        .item-card {
-            background: var(--card); margin-bottom: 8px; padding: 12px; border-radius: 12px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .item-info { flex-grow: 1; cursor: pointer; overflow: hidden; }
-        .item-name { font-weight: bold; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item-meta { font-size: 0.7rem; color: var(--subtext); }
+        .item-card { background: var(--card); margin-bottom: 8px; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .btn-action { border: none; background: none; padding: 10px; font-size: 1.2rem; cursor: pointer; color: var(--text); }
-        .btn-add { color: var(--hold); }
-        .btn-del { color: #ff4757; }
-
-        /* 3. Fixed Bottom Bar Polish */
-        .bottom-bar {
-            position: fixed; bottom: 0; left: 0; right: 0; 
-            padding: 15px; 
-            background: linear-gradient(transparent, var(--bg) 40%);
-            display: flex; justify-content: center; z-index: 100;
-        }
-        .btn-group { width: 100%; max-width: 500px; display: flex; gap: 10px; }
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 15px; background: linear-gradient(transparent, var(--bg) 40%); display: flex; justify-content: center; z-index: 100; }
         .btn-main { border-radius: 50px; border: none; font-weight: bold; font-size: 1rem; padding: 16px; cursor: pointer; width: 100%; }
-        #btn-save { background: var(--card); color: var(--text); flex: 1; border: 1px solid var(--border); }
         #btn-start { background: var(--hold); color: white; flex: 2; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3); }
 
-        /* WORKOUT SCREEN (Full Fixed) */
-        #screen-workout {
-            display: none; position: fixed; inset: 0;
-            flex-direction: column; color: white; text-align: center; z-index: 200;
-        }
+        /* WORKOUT SCREEN */
+        #screen-workout { display: none; position: fixed; inset: 0; flex-direction: column; color: white; text-align: center; z-index: 200; }
         #workout-header { padding: 5vh 20px 0; }
         #ex-name-display { font-size: 1.1rem; font-weight: bold; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; }
         #status-text { font-size: 1.6rem; font-weight: 900; letter-spacing: 2px; margin-top: 10px; }
-        #timer-display { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 35vh; font-weight: 900; line-height: 1; }
-
+        #timer-display { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 35vh; font-weight: 900; line-height: 1; transition: opacity 0.1s; }
         .stats-footer { display: grid; grid-template-columns: repeat(3, 1fr); background: rgba(0,0,0,0.2); padding: 15px 0; }
-        .stat-box { display: flex; flex-direction: column; }
-        .stat-label { font-size: 0.7rem; opacity: 0.8; font-weight: bold; }
         .stat-count { font-size: 2rem; font-weight: 900; }
+        .btn-w { padding: 15px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; width: 100%; background: rgba(255,255,255,0.2); color: white; border: 2px solid white; }
 
-        .workout-controls { padding: 20px; width: 100%; max-width: 400px; align-self: center; display: flex; flex-direction: column; gap: 8px; margin-bottom: 2vh; }
-        .btn-w { padding: 15px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; width: 100%; }
-        #btn-pause { background: rgba(255,255,255,0.2); color: white; border: 2px solid white; }
-        #btn-quit { background: #ff4757; color: white; font-size: 0.8rem; opacity: 0.9; }
-
-        /* State Backgrounds */
+        /* Color States */
         .mode-prep { background-color: var(--prep) !important; color: #222 !important; }
+        /* Readability Fix: Ensure Prep mode makes all workout text dark */
+        .mode-prep #timer-display, .mode-prep #status-text, .mode-prep .stat-count, .mode-prep #ex-name-display { color: #222 !important; }
+        .mode-prep #ex-name-display { background: rgba(0,0,0,0.1); }
+        .mode-prep .btn-w { border-color: #222; color: #222; }
+
         .mode-hold { background-color: var(--hold) !important; }
         .mode-rest { background-color: var(--rest) !important; }
         .mode-setrest { background-color: var(--setrest) !important; }
@@ -147,7 +78,7 @@
 
     <div id="screen-settings">
         <div class="header-row">
-            <h1 style="margin:0;">PT Timer</h1>
+            <h1 style="margin:0;">PT Routine Timer</h1>
             <button id="btn-theme" onclick="toggleTheme()">🌙 Dark</button>
         </div>
         
@@ -161,10 +92,10 @@
         </div>
 
         <div class="section-header"><span>MY PRESETS</span></div>
-        <div id="presets-list" class="list-container"></div>
+        <div id="presets-list" style="width:100%"></div>
 
         <div class="section-header"><span>CURRENT ROUTINE</span> <span id="routine-count">0</span></div>
-        <div id="routine-list" class="list-container"></div>
+        <div id="routine-list" style="width:100%"></div>
         
         <div style="width:100%; text-align:right; margin-bottom:20px;">
             <label>Transition Seconds: </label>
@@ -173,7 +104,7 @@
 
         <div class="bottom-bar">
             <div class="btn-group">
-                <button id="btn-save" class="btn-main" onclick="savePreset()">SAVE PRESET</button>
+                <button id="btn-save" class="btn-main" onclick="savePreset()" style="background:var(--card); color:var(--text); flex:1; border:1px solid var(--border);">SAVE PRESET</button>
                 <button id="btn-start" class="btn-main" onclick="startWorkout()">START</button>
             </div>
         </div>
@@ -186,13 +117,13 @@
         </div>
         <div id="timer-display">0</div>
         <div class="stats-footer">
-            <div class="stat-box"><span class="stat-label">EXERCISE</span><span class="stat-count" id="outEx">1/1</span></div>
-            <div class="stat-box"><span class="stat-label">SET</span><span class="stat-count" id="outSet">1</span></div>
-            <div class="stat-box"><span class="stat-label">REP</span><span class="stat-count" id="outRep">1</span></div>
+            <div class="stat-box"><span style="font-size:0.7rem; font-weight:bold; opacity:0.8;">EXERCISE</span><span class="stat-count" id="outEx">1/1</span></div>
+            <div class="stat-box"><span style="font-size:0.7rem; font-weight:bold; opacity:0.8;">SET</span><span class="stat-count" id="outSet">1</span></div>
+            <div class="stat-box"><span style="font-size:0.7rem; font-weight:bold; opacity:0.8;">REP</span><span class="stat-count" id="outRep">1</span></div>
         </div>
-        <div class="workout-controls">
+        <div style="padding: 20px; width: 100%; max-width: 400px; align-self: center; display: flex; flex-direction: column; gap: 8px; margin-bottom: 2vh;">
             <button id="btn-pause" class="btn-w" onclick="togglePause()">PAUSE</button>
-            <button id="btn-quit" class="btn-w" onclick="resetAll()">QUIT</button>
+            <button class="btn-w" onclick="resetAll()" style="background:#ff4757; border:none; font-size:0.8rem;">QUIT</button>
         </div>
     </div>
 
@@ -203,7 +134,9 @@
 
         window.onload = () => {
             presets = JSON.parse(localStorage.getItem('pt-presets') || '[]');
+            routine = JSON.parse(localStorage.getItem('pt-routine') || '[]');
             renderPresets();
+            renderRoutine();
             if (localStorage.getItem('dark-mode') === 'true') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('btn-theme').innerText = "☀️ Light";
@@ -225,11 +158,11 @@
         function savePreset() {
             const ex = {
                 name: document.getElementById('inName').value || "Exercise " + (presets.length + 1),
-                hold: parseInt(document.getElementById('inHold').value),
-                rest: parseInt(document.getElementById('inRest').value),
-                reps: parseInt(document.getElementById('inReps').value),
-                sets: parseInt(document.getElementById('inSets').value),
-                setRest: parseInt(document.getElementById('inSetRest').value)
+                hold: parseInt(document.getElementById('inHold').value) || 0,
+                rest: parseInt(document.getElementById('inRest').value) || 0,
+                reps: parseInt(document.getElementById('inReps').value) || 1,
+                sets: parseInt(document.getElementById('inSets').value) || 1,
+                setRest: parseInt(document.getElementById('inSetRest').value) || 0
             };
             presets.push(ex);
             localStorage.setItem('pt-presets', JSON.stringify(presets));
@@ -240,42 +173,23 @@
             const container = document.getElementById('presets-list');
             container.innerHTML = presets.length ? '' : '<p style="color:#aaa; font-size:0.8rem">No presets yet.</p>';
             presets.forEach((ex, i) => {
-                container.innerHTML += `
-                    <div class="item-card">
-                        <div class="item-info" onclick="loadToInputs(${i})">
-                            <span class="item-name">${ex.name}</span>
-                            <span class="item-meta">${ex.sets}x${ex.reps} | H:${ex.hold}s R:${ex.rest}s</span>
-                        </div>
-                        <button class="btn-action btn-add" onclick="addToRoutine(${i})">+</button>
-                        <button class="btn-action btn-del" onclick="deletePreset(${i})">✕</button>
-                    </div>`;
+                container.innerHTML += `<div class="item-card"><div class="item-info" onclick="loadToInputs(${i})"><span class="item-name">${ex.name}</span><span class="item-meta">${ex.sets}x${ex.reps} | H:${ex.hold}s R:${ex.rest}s</span></div><button class="btn-action" style="color:var(--hold)" onclick="addToRoutine(${i})">+</button><button class="btn-action" style="color:#ff4757" onclick="deletePreset(${i})">✕</button></div>`;
             });
         }
 
         function deletePreset(index) { presets.splice(index, 1); localStorage.setItem('pt-presets', JSON.stringify(presets)); renderPresets(); }
-        
-        function loadToInputs(index) {
-            const ex = presets[index];
-            document.getElementById('inName').value = ex.name;
-            document.getElementById('inHold').value = ex.hold;
-            document.getElementById('inRest').value = ex.rest;
-            document.getElementById('inReps').value = ex.reps;
-            document.getElementById('inSets').value = ex.sets;
-            document.getElementById('inSetRest').value = ex.setRest;
+        function loadToInputs(i) {
+            const ex = presets[i];
+            ['Name','Hold','Rest','Reps','Sets','SetRest'].forEach(f => document.getElementById('in'+f).value = ex[f.toLowerCase()]);
         }
-
-        function addToRoutine(index) { routine.push({...presets[index]}); renderRoutine(); }
-        
+        function addToRoutine(i) { routine.push({...presets[i]}); renderRoutine(); }
         function renderRoutine() {
+            localStorage.setItem('pt-routine', JSON.stringify(routine));
             const container = document.getElementById('routine-list');
             document.getElementById('routine-count').innerText = routine.length;
             container.innerHTML = routine.length ? '' : '<p style="color:#aaa; font-size:0.8rem">Tap + on a preset.</p>';
             routine.forEach((ex, i) => {
-                container.innerHTML += `
-                    <div class="item-card" style="border-left: 4px solid var(--transition)">
-                        <span class="item-name">${ex.name}</span>
-                        <button class="btn-action btn-del" onclick="routine.splice(${i},1);renderRoutine();">✕</button>
-                    </div>`;
+                container.innerHTML += `<div class="item-card" style="border-left: 4px solid var(--transition)"><span class="item-name">${ex.name}</span><button class="btn-action" style="color:#ff4757" onclick="routine.splice(${i},1);renderRoutine();">✕</button></div>`;
             });
         }
 
@@ -283,22 +197,21 @@
             if (routine.length === 0) {
                 routine = [{
                     name: document.getElementById('inName').value || "Quick Start",
-                    hold: parseInt(document.getElementById('inHold').value),
-                    rest: parseInt(document.getElementById('inRest').value),
-                    reps: parseInt(document.getElementById('inReps').value),
-                    sets: parseInt(document.getElementById('inSets').value),
-                    setRest: parseInt(document.getElementById('inSetRest').value)
+                    hold: parseInt(document.getElementById('inHold').value) || 0,
+                    rest: parseInt(document.getElementById('inRest').value) || 0,
+                    reps: parseInt(document.getElementById('inReps').value) || 1,
+                    sets: parseInt(document.getElementById('inSets').value) || 1,
+                    setRest: parseInt(document.getElementById('inSetRest').value) || 0
                 }];
             }
-            currentExIdx = 0;
-            currentRep = 1; currentSet = 1;
+            currentExIdx = 0; currentRep = 1; currentSet = 1;
             mode = 'PREP'; timeLeft = 5;
-            
             document.getElementById('screen-settings').style.display = 'none';
             document.getElementById('screen-workout').style.display = 'flex';
             if ('wakeLock' in navigator) { try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e){} }
             updateUI();
             speak("Get ready for " + routine[currentExIdx].name);
+            if(timer) clearInterval(timer);
             timer = setInterval(tick, 1000);
         }
 
@@ -310,50 +223,71 @@
         }
 
         function transition() {
+            if (!timer) return; 
             const ex = routine[currentExIdx];
-            const transTime = parseInt(document.getElementById('inTrans').value);
+            const transTime = parseInt(document.getElementById('inTrans').value) || 0;
+
+            // Visual 'blink' to signal change
+            const display = document.getElementById('timer-display');
+            display.style.opacity = '0';
+            setTimeout(() => display.style.opacity = '1', 50);
 
             if (mode === 'PREP' || mode === 'REST' || mode === 'SETREST' || mode === 'TRANSITION') {
-                mode = 'HOLD'; timeLeft = ex.hold; speak("Hold"); return;
-            }
-
-            if (mode === 'HOLD') {
+                mode = 'HOLD'; timeLeft = ex.hold; speak("Hold");
+            } else if (mode === 'HOLD') {
                 if (currentRep < ex.reps) {
-                    currentRep++; mode = 'REST'; timeLeft = ex.rest; speak("Rest");
+                    currentRep++; mode = 'REST'; timeLeft = ex.rest; 
+                    speak(timeLeft === 0 ? "Rep " + currentRep : "Rest");
                 } else if (currentSet < ex.sets) {
-                    currentSet++; currentRep = 1; mode = 'SETREST'; timeLeft = ex.setRest; speak("Set rest");
+                    currentSet++; currentRep = 1; mode = 'SETREST'; timeLeft = ex.setRest; 
+                    speak(timeLeft === 0 ? "Set " + currentSet : "Set rest");
                 } else if (currentExIdx < routine.length - 1) {
                     currentExIdx++; currentRep = 1; currentSet = 1;
                     mode = 'TRANSITION'; timeLeft = transTime;
-                    speak("Next exercise: " + routine[currentExIdx].name);
+                    speak("Next: " + routine[currentExIdx].name);
                 } else {
                     finish();
+                    return;
                 }
+            }
+
+            // Recursive skip for 0-second phases (with safety guard)
+            if (timeLeft <= 0 && timer !== null) {
+                // Safety: if the user sets everything to 0, don't freeze the browser
+                setTimeout(() => { if(timer) transition(); }, 10); 
             }
         }
 
-        function finish() { clearInterval(timer); speak("Routine complete."); alert("Workout complete!"); resetAll(); }
+        function finish() {
+            clearInterval(timer); timer = null;
+            speak("Routine complete.");
+            setTimeout(() => { 
+                alert("Workout complete!"); 
+                resetAll(); 
+            }, 250);
+        }
 
         function togglePause() {
             isPaused = !isPaused;
             document.getElementById('btn-pause').innerText = isPaused ? "RESUME" : "PAUSE";
-            document.getElementById('btn-pause').style.background = isPaused ? "var(--hold)" : "rgba(255,255,255,0.2)";
         }
 
         function resetAll() {
-            clearInterval(timer); timer = null; isPaused = false;
-            if (wakeLock) wakeLock.release();
+            if(timer) clearInterval(timer); timer = null; isPaused = false;
+            if (wakeLock) { try { wakeLock.release(); } catch(e){} wakeLock = null; }
             document.getElementById('screen-settings').style.display = 'flex';
             document.getElementById('screen-workout').style.display = 'none';
-            if (document.getElementById('routine-count').innerText === "0") routine = [];
+            // Only clear the active routine if it was built via Quick Start
+            if (localStorage.getItem('pt-routine') === '[]') routine = [];
         }
 
         function updateUI() {
+            if (!routine[currentExIdx]) return;
             const ex = routine[currentExIdx];
             document.getElementById('screen-workout').className = "mode-" + mode.toLowerCase();
             document.getElementById('status-text').innerText = (mode === 'SETREST' ? 'SET REST' : mode);
             document.getElementById('ex-name-display').innerText = (mode === 'TRANSITION' ? 'UP NEXT' : ex.name);
-            document.getElementById('timer-display').innerText = timeLeft;
+            document.getElementById('timer-display').innerText = Math.max(0, timeLeft);
             document.getElementById('outEx').innerText = (currentExIdx + 1) + "/" + routine.length;
             document.getElementById('outSet').innerText = currentSet;
             document.getElementById('outRep').innerText = currentRep;
