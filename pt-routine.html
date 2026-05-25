@@ -24,8 +24,6 @@
         }
 
         * { box-sizing: border-box; }
-        
-        /* Fix for PC background gap */
         html { height: 100%; background-color: var(--bg); }
 
         body { 
@@ -68,7 +66,6 @@
         label { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; color: var(--subtext); margin-bottom: 4px; }
         input { padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; background: var(--card); color: var(--text); }
 
-        /* Lists */
         .section-header { width: 100%; max-width: 500px; margin: 20px 0 10px; font-weight: bold; color: var(--subtext); display: flex; justify-content: space-between; font-size: 0.8rem; }
         .list-container { width: 100%; max-width: 500px; }
         .item-card {
@@ -83,7 +80,6 @@
         .btn-add { color: var(--hold); }
         .btn-del { color: #ff4757; font-size: 0.9rem; }
 
-        /* Fixed Bottom Controls */
         .bottom-bar {
             position: fixed; bottom: 0; left: 0; right: 0; padding: 20px;
             background: linear-gradient(transparent, var(--bg) 30%);
@@ -94,7 +90,6 @@
         #btn-save { background: var(--card); color: var(--text); flex: 1; border: 1px solid var(--border); }
         #btn-start { background: var(--hold); color: white; flex: 2; }
 
-        /* WORKOUT SCREEN */
         #screen-workout {
             display: none; position: fixed; inset: 0;
             flex-direction: column; color: white; text-align: center; z-index: 100;
@@ -114,7 +109,6 @@
         #btn-pause { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; }
         #btn-quit { background: #ff4757; color: white; font-size: 0.8rem; opacity: 0.9; }
 
-        /* States */
         .mode-prep { background-color: var(--prep) !important; color: #222 !important; }
         .mode-hold { background-color: var(--hold) !important; }
         .mode-rest { background-color: var(--rest) !important; }
@@ -146,7 +140,7 @@
         <div id="routine-list" class="list-container"></div>
         
         <div style="width:100%; max-width:500px; text-align:right; margin-bottom:40px;">
-            <label>Transition between exercises (s): </label>
+            <label>Auto-Transition (s): </label>
             <input type="number" id="inTrans" value="10" style="width:50px; padding:4px;">
         </div>
 
@@ -201,7 +195,6 @@
             window.speechSynthesis.speak(msg);
         }
 
-        // PRESET & ROUTINE MGMT
         function savePreset() {
             const ex = {
                 name: document.getElementById('inName').value || "Exercise " + (presets.length + 1),
@@ -233,13 +226,19 @@
         }
 
         function deletePreset(index) { presets.splice(index, 1); localStorage.setItem('pt-presets', JSON.stringify(presets)); renderPresets(); }
+        
         function loadToInputs(index) {
             const ex = presets[index];
-            ['inName','inHold','inRest','inReps','inSets','inSetRest'].forEach(id => {
-                document.getElementById(id).value = ex[id.replace('in','').toLowerCase()] || ex.name;
-            });
+            document.getElementById('inName').value = ex.name;
+            document.getElementById('inHold').value = ex.hold;
+            document.getElementById('inRest').value = ex.rest;
+            document.getElementById('inReps').value = ex.reps;
+            document.getElementById('inSets').value = ex.sets;
+            document.getElementById('inSetRest').value = ex.setRest;
         }
+
         function addToRoutine(index) { routine.push({...presets[index]}); renderRoutine(); }
+        
         function renderRoutine() {
             const container = document.getElementById('routine-list');
             document.getElementById('routine-count').innerText = routine.length;
@@ -253,10 +252,8 @@
             });
         }
 
-        // TIMER LOGIC
         async function startWorkout() {
             if (routine.length === 0) {
-                // If routine empty, use current inputs as single exercise
                 routine = [{
                     name: document.getElementById('inName').value || "Quick Start",
                     hold: parseInt(document.getElementById('inHold').value),
@@ -267,18 +264,15 @@
                 }];
             }
             currentExIdx = 0;
-            startNewExercise();
+            currentRep = 1; currentSet = 1; // Initial reset
+            mode = 'PREP'; timeLeft = 5;
+            
             document.getElementById('screen-settings').style.display = 'none';
             document.getElementById('screen-workout').style.display = 'flex';
             if ('wakeLock' in navigator) { try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e){} }
             updateUI();
+            speak("Get ready for " + routine[currentExIdx].name);
             timer = setInterval(tick, 1000);
-        }
-
-        function startNewExercise() {
-            const ex = routine[currentExIdx];
-            currentRep = 1; currentSet = 1; mode = 'PREP'; timeLeft = 5;
-            speak("Get ready for " + ex.name);
         }
 
         function tick() {
@@ -292,7 +286,6 @@
             const ex = routine[currentExIdx];
             const transTime = parseInt(document.getElementById('inTrans').value);
 
-            // If we were just resting/prepping, we ALWAYS go to HOLD
             if (mode === 'PREP' || mode === 'REST' || mode === 'SETREST' || mode === 'TRANSITION') {
                 mode = 'HOLD'; 
                 timeLeft = ex.hold; 
@@ -300,16 +293,13 @@
                 return;
             }
 
-            // If we just finished a HOLD, we decide what is next
             if (mode === 'HOLD') {
-                // 1. More reps in this set?
                 if (currentRep < ex.reps) {
                     currentRep++;
                     mode = 'REST';
                     timeLeft = ex.rest;
                     speak("Rest");
                 } 
-                // 2. More sets in this exercise?
                 else if (currentSet < ex.sets) {
                     currentSet++;
                     currentRep = 1;
@@ -317,14 +307,14 @@
                     timeLeft = ex.setRest;
                     speak("Set rest");
                 } 
-                // 3. More exercises in the routine?
                 else if (currentExIdx < routine.length - 1) {
                     currentExIdx++;
+                    currentRep = 1; // FIX: Reset rep for new exercise
+                    currentSet = 1; // FIX: Reset set for new exercise
                     mode = 'TRANSITION';
                     timeLeft = transTime;
                     speak("Next exercise: " + routine[currentExIdx].name);
                 } 
-                // 4. All done!
                 else {
                     finish();
                 }
@@ -346,15 +336,12 @@
             if (wakeLock) wakeLock.release();
             document.getElementById('screen-settings').style.display = 'flex';
             document.getElementById('screen-workout').style.display = 'none';
-            // Clear temporary routine if it was a quick start
             if (document.getElementById('routine-count').innerText === "0") routine = [];
         }
 
         function updateUI() {
             const ex = routine[currentExIdx];
-            const screen = document.getElementById('screen-workout');
-            screen.className = "mode-" + mode.toLowerCase();
-            
+            document.getElementById('screen-workout').className = "mode-" + mode.toLowerCase();
             document.getElementById('status-text').innerText = (mode === 'SETREST' ? 'SET REST' : mode);
             document.getElementById('ex-name-display').innerText = (mode === 'TRANSITION' ? 'UP NEXT' : ex.name);
             document.getElementById('timer-display').innerText = timeLeft;
