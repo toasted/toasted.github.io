@@ -9,25 +9,27 @@
             --hold: #2ecc71; --rest: #e67e22; --setrest: #3498db; 
             --prep: #f1c40f; --transition: #9b59b6;
             --bg: #f0f2f5; 
-            --card-bg: #ffffff;
+            --card: #ffffff;
             --text: #333333;
-            --sub-text: #888888;
-            --input-border: #dddddd;
+            --subtext: #888888;
+            --border: #dddddd;
         }
 
         body.dark-mode {
             --bg: #121212;
-            --card-bg: #1e1e1e;
+            --card: #1e1e1e;
             --text: #e0e0e0;
-            --sub-text: #aaaaaa;
-            --input-border: #333333;
+            --subtext: #aaaaaa;
+            --border: #333333;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; }
         
-        html, body { 
-            margin: 0; padding: 0; 
-            width: 100%; min-height: 100vh;
+        /* Fix for PC background gap */
+        html { height: 100%; background-color: var(--bg); }
+
+        body { 
+            margin: 0; padding: 0; width: 100%; min-height: 100%;
             font-family: -apple-system, system-ui, sans-serif;
             background-color: var(--bg);
             color: var(--text);
@@ -36,94 +38,83 @@
 
         #screen-settings {
             display: flex; flex-direction: column; align-items: center;
-            width: 100%; max-width: 600px; margin: 0 auto;
-            padding: 20px; min-height: 100vh;
+            width: 100%; padding: 20px; padding-bottom: 120px;
         }
 
         .header-row {
             display: flex; justify-content: space-between; align-items: center;
-            width: 100%; margin-bottom: 20px;
+            width: 100%; max-width: 500px; margin-bottom: 15px;
         }
 
-        /* Responsive Grid */
+        #btn-theme {
+            background: none; border: 1px solid var(--subtext); color: var(--text);
+            padding: 5px 12px; border-radius: 15px; cursor: pointer; font-size: 0.8rem;
+        }
+
         .settings-card {
-            background: var(--card-bg); padding: 20px; border-radius: 20px;
+            background: var(--card); padding: 20px; border-radius: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            display: grid; 
-            grid-template-columns: 1fr; /* Default 1 col for small mobile */
-            gap: 15px; width: 100%; margin-bottom: 20px;
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 12px; max-width: 500px; width: 100%;
         }
 
-        @media (min-width: 400px) {
-            .settings-card { grid-template-columns: 1fr 1fr; }
+        @media (orientation: landscape) and (max-height: 500px) {
+            .settings-card { grid-template-columns: repeat(3, 1fr); }
+            .full-width { grid-column: span 1 !important; }
         }
 
         .settings-card div { display: flex; flex-direction: column; }
-        .full-width { grid-column: 1 / -1; }
-        
-        label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--sub-text); margin-bottom: 6px; }
-        
-        input { 
-            padding: 12px; border: 1px solid var(--input-border); border-radius: 10px; 
-            font-size: 16px; /* Prevents iOS zoom */
-            background: var(--card-bg); color: var(--text); width: 100%;
-        }
+        .full-width { grid-column: span 2; }
+        label { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; color: var(--subtext); margin-bottom: 4px; }
+        input { padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; background: var(--card); color: var(--text); }
 
-        /* List Styling */
-        .section-header { width: 100%; margin: 15px 0 10px 0; font-weight: 800; font-size: 0.8rem; color: var(--sub-text); display: flex; justify-content: space-between; }
-        .list-container { width: 100%; margin-bottom: 20px; }
-        
+        /* Lists */
+        .section-header { width: 100%; max-width: 500px; margin: 20px 0 10px; font-weight: bold; color: var(--subtext); display: flex; justify-content: space-between; font-size: 0.8rem; }
+        .list-container { width: 100%; max-width: 500px; }
         .item-card {
-            background: var(--card-bg); margin-bottom: 10px; padding: 15px; border-radius: 15px;
+            background: var(--card); margin-bottom: 8px; padding: 12px; border-radius: 12px;
             display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-
         .item-info { flex-grow: 1; cursor: pointer; }
-        .item-name { font-weight: 700; display: block; margin-bottom: 2px; }
-        .item-meta { font-size: 0.75rem; color: var(--sub-text); }
-        
-        .btn-action { border: none; background: #eee; padding: 8px 12px; font-size: 1rem; cursor: pointer; border-radius: 8px; margin-left: 5px; }
-        body.dark-mode .btn-action { background: #333; }
-        .btn-add { color: var(--hold); font-weight: bold; }
-        .btn-del { color: #ff4757; }
+        .item-name { font-weight: bold; display: block; }
+        .item-meta { font-size: 0.7rem; color: var(--subtext); }
+        .btn-action { border: none; background: none; padding: 5px 10px; font-size: 1.1rem; cursor: pointer; }
+        .btn-add { color: var(--hold); }
+        .btn-del { color: #ff4757; font-size: 0.9rem; }
 
-        /* Fixed-ish Footer (Sticky works better with mobile keyboards) */
-        .footer-controls {
-            position: sticky; bottom: 20px; width: 100%; 
-            padding: 15px; background: var(--card-bg);
-            border-radius: 25px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-            display: flex; gap: 10px; margin-top: auto;
+        /* Fixed Bottom Controls */
+        .bottom-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; padding: 20px;
+            background: linear-gradient(transparent, var(--bg) 30%);
+            display: flex; justify-content: center; z-index: 10;
         }
-
-        button.main-btn { 
-            border: none; border-radius: 15px; font-size: 1rem; font-weight: 700; 
-            cursor: pointer; padding: 16px; transition: opacity 0.2s;
-        }
-        #btn-save { background: var(--bg); color: var(--text); flex: 1; }
+        .btn-group { width: 100%; max-width: 500px; display: flex; gap: 10px; }
+        .btn-main { border-radius: 50px; border: none; font-weight: bold; font-size: 1rem; padding: 16px; cursor: pointer; }
+        #btn-save { background: var(--card); color: var(--text); flex: 1; border: 1px solid var(--border); }
         #btn-start { background: var(--hold); color: white; flex: 2; }
 
         /* WORKOUT SCREEN */
         #screen-workout {
             display: none; position: fixed; inset: 0;
-            flex-direction: column; color: white; text-align: center; z-index: 1000;
+            flex-direction: column; color: white; text-align: center; z-index: 100;
         }
         #workout-header { padding: 40px 20px 0; }
-        #ex-name-display { font-size: 1.2rem; font-weight: 700; background: rgba(0,0,0,0.2); padding: 6px 20px; border-radius: 20px; }
-        #status-text { font-size: 1.8rem; font-weight: 900; letter-spacing: 2px; margin-top: 15px; }
+        #ex-name-display { font-size: 1.1rem; font-weight: bold; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; }
+        #status-text { font-size: 1.6rem; font-weight: 900; letter-spacing: 2px; margin-top: 10px; }
         #timer-display { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 35vh; font-weight: 900; }
 
-        .stats-footer { display: grid; grid-template-columns: repeat(3, 1fr); background: rgba(0,0,0,0.2); padding: 20px 0; }
+        .stats-footer { display: grid; grid-template-columns: repeat(3, 1fr); background: rgba(0,0,0,0.2); padding: 15px 0; }
         .stat-box { display: flex; flex-direction: column; }
         .stat-label { font-size: 0.7rem; opacity: 0.8; font-weight: bold; }
-        .stat-count { font-size: 2rem; font-weight: 900; }
+        .stat-count { font-size: 2.2rem; font-weight: 900; }
 
-        .workout-btns { padding: 30px; display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 400px; margin: 0 auto; }
-        .w-btn { padding: 15px; border-radius: 50px; border: none; font-weight: 700; font-size: 1.1rem; cursor: pointer; }
-        #btn-pause { background: rgba(255,255,255,0.2); color: white; border: 2px solid white; }
-        #btn-quit { background: #ff4757; color: white; font-size: 0.9rem; opacity: 0.9; }
+        .workout-controls { padding: 20px; width: 100%; max-width: 400px; align-self: center; display: flex; flex-direction: column; gap: 8px; }
+        .btn-w { padding: 15px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; }
+        #btn-pause { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; }
+        #btn-quit { background: #ff4757; color: white; font-size: 0.8rem; opacity: 0.9; }
 
-        /* Vibrant Modes */
+        /* States */
         .mode-prep { background-color: var(--prep) !important; color: #222 !important; }
         .mode-hold { background-color: var(--hold) !important; }
         .mode-rest { background-color: var(--rest) !important; }
@@ -135,12 +126,12 @@
 
     <div id="screen-settings">
         <div class="header-row">
-            <h1 style="margin:0; font-size: 1.5rem;">PT Routine Timer</h1>
-            <button id="btn-dark-toggle" onclick="toggleDarkMode()" style="background:none; border:1px solid var(--sub-text); color:var(--text); padding:5px 12px; border-radius:10px; font-size:0.8rem;">🌙 Dark</button>
+            <h1 style="margin:0;">PT Routine Timer</h1>
+            <button id="btn-theme" onclick="toggleTheme()">🌙 Dark</button>
         </div>
         
         <div class="settings-card">
-            <div class="full-width"><label>Exercise Name</label><input type="text" id="inName" placeholder="e.g. Squat Hold"></div>
+            <div class="full-width"><label>Exercise Name</label><input type="text" id="inName" placeholder="e.g. Plank"></div>
             <div><label>Hold (Sec)</label><input type="number" id="inHold" value="10"></div>
             <div><label>Rest (Sec)</label><input type="number" id="inRest" value="5"></div>
             <div><label>Reps</label><input type="number" id="inReps" value="10"></div>
@@ -151,24 +142,26 @@
         <div class="section-header"><span>MY PRESETS</span></div>
         <div id="presets-list" class="list-container"></div>
 
-        <div class="section-header"><span>ROUTINE PLAYLIST</span> <span id="routine-count">0</span></div>
+        <div class="section-header"><span>CURRENT ROUTINE</span> <span id="routine-count">0</span></div>
         <div id="routine-list" class="list-container"></div>
         
-        <div style="width: 100%; text-align: right; margin-bottom: 40px;">
-            <label>Auto-Transition (sec): </label>
-            <input type="number" id="inTrans" value="10" style="width: 60px; display: inline; padding: 5px; margin-left: 5px;">
+        <div style="width:100%; max-width:500px; text-align:right; margin-bottom:40px;">
+            <label>Transition between exercises (s): </label>
+            <input type="number" id="inTrans" value="10" style="width:50px; padding:4px;">
         </div>
 
-        <div class="footer-controls">
-            <button id="btn-save" class="main-btn" onclick="savePreset()">SAVE PRESET</button>
-            <button id="btn-start" class="main-btn" onclick="startWorkout()">START WORKOUT</button>
+        <div class="bottom-bar">
+            <div class="btn-group">
+                <button id="btn-save" class="btn-main" onclick="savePreset()">SAVE PRESET</button>
+                <button id="btn-start" class="btn-main" onclick="startWorkout()">START</button>
+            </div>
         </div>
     </div>
 
     <div id="screen-workout">
         <div id="workout-header">
             <div id="ex-name-display">EXERCISE</div>
-            <div id="status-text">GET READY</div>
+            <div id="status-text">PREP</div>
         </div>
         <div id="timer-display">0</div>
         <div class="stats-footer">
@@ -176,9 +169,9 @@
             <div class="stat-box"><span class="stat-label">SET</span><span class="stat-count" id="outSet">1</span></div>
             <div class="stat-box"><span class="stat-label">REP</span><span class="stat-count" id="outRep">1</span></div>
         </div>
-        <div class="workout-btns">
-            <button id="btn-pause" class="w-btn" onclick="togglePause()">PAUSE</button>
-            <button id="btn-quit" class="w-btn" onclick="resetAll()">QUIT</button>
+        <div class="workout-controls">
+            <button id="btn-pause" class="btn-w" onclick="togglePause()">PAUSE</button>
+            <button id="btn-quit" class="btn-w" onclick="resetAll()">QUIT</button>
         </div>
     </div>
 
@@ -188,16 +181,18 @@
         let presets = [], routine = [];
 
         window.onload = () => {
-            if (localStorage.getItem('pt-darkmode') === 'true') toggleDarkMode(true);
             presets = JSON.parse(localStorage.getItem('pt-presets') || '[]');
             renderPresets();
+            if (localStorage.getItem('dark-mode') === 'true') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('btn-theme').innerText = "☀️ Light";
+            }
         };
 
-        function toggleDarkMode(init = false) {
-            const isDark = init ? true : document.body.classList.toggle('dark-mode');
-            if (init) document.body.classList.add('dark-mode');
-            localStorage.setItem('pt-darkmode', isDark);
-            document.getElementById('btn-dark-toggle').innerText = isDark ? "☀️ Light" : "🌙 Dark";
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('dark-mode', isDark);
+            document.getElementById('btn-theme').innerText = isDark ? "☀️ Light" : "🌙 Dark";
         }
 
         function speak(text) {
@@ -206,6 +201,7 @@
             window.speechSynthesis.speak(msg);
         }
 
+        // PRESET & ROUTINE MGMT
         function savePreset() {
             const ex = {
                 name: document.getElementById('inName').value || "Exercise " + (presets.length + 1),
@@ -222,7 +218,7 @@
 
         function renderPresets() {
             const container = document.getElementById('presets-list');
-            container.innerHTML = presets.length ? '' : '<p style="color:#aaa; font-size:0.8rem">Save your first exercise preset above.</p>';
+            container.innerHTML = presets.length ? '' : '<p style="color:#aaa; font-size:0.8rem">No presets yet.</p>';
             presets.forEach((ex, i) => {
                 container.innerHTML += `
                     <div class="item-card">
@@ -236,44 +232,33 @@
             });
         }
 
-        function deletePreset(index) {
-            presets.splice(index, 1);
-            localStorage.setItem('pt-presets', JSON.stringify(presets));
-            renderPresets();
-        }
-
+        function deletePreset(index) { presets.splice(index, 1); localStorage.setItem('pt-presets', JSON.stringify(presets)); renderPresets(); }
         function loadToInputs(index) {
             const ex = presets[index];
-            document.getElementById('inName').value = ex.name;
-            document.getElementById('inHold').value = ex.hold;
-            document.getElementById('inRest').value = ex.rest;
-            document.getElementById('inReps').value = ex.reps;
-            document.getElementById('inSets').value = ex.sets;
-            document.getElementById('inSetRest').value = ex.setRest;
+            ['inName','inHold','inRest','inReps','inSets','inSetRest'].forEach(id => {
+                document.getElementById(id).value = ex[id.replace('in','').toLowerCase()] || ex.name;
+            });
         }
-
-        function addToRoutine(index) {
-            routine.push({...presets[index]});
-            renderRoutine();
-        }
-
+        function addToRoutine(index) { routine.push({...presets[index]}); renderRoutine(); }
         function renderRoutine() {
             const container = document.getElementById('routine-list');
             document.getElementById('routine-count').innerText = routine.length;
-            container.innerHTML = routine.length ? '' : '<p style="color:#aaa; font-size:0.8rem">Tap + on a preset to build your playlist.</p>';
+            container.innerHTML = routine.length ? '' : '<p style="color:#aaa; font-size:0.8rem">Tap + on a preset.</p>';
             routine.forEach((ex, i) => {
                 container.innerHTML += `
-                    <div class="item-card" style="border-left: 5px solid var(--transition)">
+                    <div class="item-card" style="border-left: 4px solid var(--transition)">
                         <span class="item-name">${ex.name}</span>
                         <button class="btn-action btn-del" onclick="routine.splice(${i},1);renderRoutine();">✕</button>
                     </div>`;
             });
         }
 
+        // TIMER LOGIC
         async function startWorkout() {
             if (routine.length === 0) {
+                // If routine empty, use current inputs as single exercise
                 routine = [{
-                    name: document.getElementById('inName').value || "Quick Exercise",
+                    name: document.getElementById('inName').value || "Quick Start",
                     hold: parseInt(document.getElementById('inHold').value),
                     rest: parseInt(document.getElementById('inRest').value),
                     reps: parseInt(document.getElementById('inReps').value),
@@ -282,18 +267,18 @@
                 }];
             }
             currentExIdx = 0;
-            initExercise();
+            startNewExercise();
             document.getElementById('screen-settings').style.display = 'none';
             document.getElementById('screen-workout').style.display = 'flex';
             if ('wakeLock' in navigator) { try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e){} }
             updateUI();
-            speak("Starting workout. " + routine[currentExIdx].name);
             timer = setInterval(tick, 1000);
         }
 
-        function initExercise() {
+        function startNewExercise() {
             const ex = routine[currentExIdx];
             currentRep = 1; currentSet = 1; mode = 'PREP'; timeLeft = 5;
+            speak("Get ready for " + ex.name);
         }
 
         function tick() {
@@ -305,35 +290,55 @@
 
         function transition() {
             const ex = routine[currentExIdx];
+            const transTime = parseInt(document.getElementById('inTrans').value);
+
+            // If we were just resting/prepping, we ALWAYS go to HOLD
             if (mode === 'PREP' || mode === 'REST' || mode === 'SETREST' || mode === 'TRANSITION') {
-                mode = 'HOLD'; timeLeft = ex.hold; speak("Hold");
-            } else {
+                mode = 'HOLD'; 
+                timeLeft = ex.hold; 
+                speak("Hold");
+                return;
+            }
+
+            // If we just finished a HOLD, we decide what is next
+            if (mode === 'HOLD') {
+                // 1. More reps in this set?
                 if (currentRep < ex.reps) {
-                    currentRep++; mode = 'REST'; timeLeft = ex.rest; speak("Rest");
-                } else if (currentSet < ex.sets) {
-                    currentSet++; currentRep = 1; mode = 'SETREST'; timeLeft = ex.setRest; speak("Set rest");
-                } else {
-                    if (currentExIdx < routine.length - 1) {
-                        currentExIdx++; mode = 'TRANSITION';
-                        timeLeft = parseInt(document.getElementById('inTrans').value);
-                        speak("Next: " + routine[currentExIdx].name);
-                    } else {
-                        finish();
-                    }
+                    currentRep++;
+                    mode = 'REST';
+                    timeLeft = ex.rest;
+                    speak("Rest");
+                } 
+                // 2. More sets in this exercise?
+                else if (currentSet < ex.sets) {
+                    currentSet++;
+                    currentRep = 1;
+                    mode = 'SETREST';
+                    timeLeft = ex.setRest;
+                    speak("Set rest");
+                } 
+                // 3. More exercises in the routine?
+                else if (currentExIdx < routine.length - 1) {
+                    currentExIdx++;
+                    mode = 'TRANSITION';
+                    timeLeft = transTime;
+                    speak("Next exercise: " + routine[currentExIdx].name);
+                } 
+                // 4. All done!
+                else {
+                    finish();
                 }
             }
         }
 
         function finish() {
-            clearInterval(timer);
-            speak("Routine complete. Great job!");
-            alert("Routine complete!");
-            resetAll();
+            clearInterval(timer); speak("Routine complete. Great job!"); alert("Workout complete!"); resetAll();
         }
 
         function togglePause() {
             isPaused = !isPaused;
             document.getElementById('btn-pause').innerText = isPaused ? "RESUME" : "PAUSE";
+            document.getElementById('btn-pause').style.background = isPaused ? "var(--hold)" : "rgba(255,255,255,0.2)";
         }
 
         function resetAll() {
@@ -341,14 +346,17 @@
             if (wakeLock) wakeLock.release();
             document.getElementById('screen-settings').style.display = 'flex';
             document.getElementById('screen-workout').style.display = 'none';
+            // Clear temporary routine if it was a quick start
             if (document.getElementById('routine-count').innerText === "0") routine = [];
         }
 
         function updateUI() {
             const ex = routine[currentExIdx];
-            document.getElementById('screen-workout').className = "mode-" + mode.toLowerCase();
+            const screen = document.getElementById('screen-workout');
+            screen.className = "mode-" + mode.toLowerCase();
+            
             document.getElementById('status-text').innerText = (mode === 'SETREST' ? 'SET REST' : mode);
-            document.getElementById('ex-name-display').innerText = mode === 'TRANSITION' ? "UP NEXT" : ex.name;
+            document.getElementById('ex-name-display').innerText = (mode === 'TRANSITION' ? 'UP NEXT' : ex.name);
             document.getElementById('timer-display').innerText = timeLeft;
             document.getElementById('outEx').innerText = (currentExIdx + 1) + "/" + routine.length;
             document.getElementById('outSet').innerText = currentSet;
